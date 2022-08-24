@@ -1,0 +1,84 @@
+import torch
+import torch.nn as nn
+
+
+class Discriminator(nn.Module):
+    def __init__(self, channels_img, features_d, num_classes, features_size):
+        super(Discriminator, self).__init__()
+        self.features_size = features_size
+        self.disc = nn.Sequential(
+            # input: batch_size * 3
+            nn.Conv1d(channels_img + 1, features_d, kernel_size=1, stride=1, padding=1),
+            nn.LeakyReLU(0.2),
+            # _block(in_channels, out_channels, kernel_size, stride, padding)
+            self._block(features_d, features_d * 2, 4, 2, 1),
+            self._block(features_d * 2, features_d * 4, 4, 2, 1),
+            self._block(features_d * 4, features_d * 8, 4, 2, 1),
+            # After all _block img output is 4x4 (Conv2d below makes into 1x1)
+            nn.Conv1d(features_d * 8, 1, kernel_size=4, stride=2, padding=0),
+            nn.Sigmoid()
+        )
+        self.embed = nn.Embedding(num_embeddings=num_classes, embedding_dim=features_size)
+
+        ## test
+        self.layer1 = nn.Conv1d(channels_img + 1, features_d, kernel_size=1, stride=1, padding=1)
+        self.layer2 = self._block(features_d, features_d * 2, 4, 2, 1)
+        self.layer3 = self._block(features_d * 2, features_d * 4, 4, 2, 1)
+        self.layer4 = self._block(features_d * 4, features_d * 8, 4, 2, 1)
+        self.layer5 = nn.Conv1d(features_d * 8, 1, kernel_size=4, stride=2, padding=0)
+
+    def _block(self, in_channels, out_channels, kernel_size, stride, padding):
+        return nn.Sequential(
+            nn.Conv1d(
+                in_channels, out_channels, kernel_size, stride, padding, bias=False,
+            ),
+            nn.InstanceNorm1d(out_channels, affine=True),
+            nn.LeakyReLU(0.2),
+        )
+
+    def forward(self, x, label):
+        embedding = self.embed(label).view(label.shape[0], 1, self.features_size)
+        x = torch.cat([x, embedding], dim=1)  # N * C * img_size
+        return self.disc(x)
+
+
+class Generator(nn.Module):
+    def __init__(self, channels_noise, channels_seq, features_g, num_classes, seq_size, embed_size, ):
+        super(Generator, self).__init__()
+        self.seq_size = seq_size
+        self.embed_size = embed_size
+        self.net = nn.Sequential(
+            # Input: N x channels_noise x 1
+            self._block(channels_noise + embed_size, features_g * 16, 4, 1, 0),  # seq: 4
+            self._block(features_g * 16, features_g * 8, 4, 2, 1),  # seq: 8
+            self._block(features_g * 8, features_g * 4, 4, 2, 1),  # seq: 16
+            self._block(features_g * 4, features_g * 2, 4, 2, 1),  # seq: 32
+            nn.ConvTranspose1d(
+                features_g * 2, channels_seq, kernel_size=1, stride=1, padding=1
+            ),
+            # Output: N x channels_img x 30
+            nn.Tanh(),
+        )
+        self.embed = nn.Embedding(num_classes, embed_size)
+
+    def _block(self, in_channels, out_channels, kernel_size, stride, padding):
+        return nn.Sequential(
+            nn.ConvTranspose1d(
+                in_channels, out_channels, kernel_size, stride, padding, bias=False,
+            ),
+            nn.BatchNorm1d(out_channels),
+            nn.ReLU(),
+        )
+
+    def forward(self, x, labels):
+        # latent vector z : N * noise_dim * 1  add dimension
+        embedding = self.embed(labels).view(labels.shape[0], self.embed_size, 1)
+        x = torch.cat([x, embedding], dim=1)
+        return self.net(x)
+
+
+def initialize_weights(model):
+    # Initializes weights according to the DCGAN paper
+    for m in model.modules():
+        if isinstance(m, (nn.Conv1d, nn.ConvTranspose1d, nn.BatchNorm1d)):
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
