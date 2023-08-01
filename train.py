@@ -19,7 +19,7 @@ import sklearn.svm as svm
 from sklearn.utils import column_or_1d
 from sklearn.manifold import TSNE
 
-# 固定随机种子
+
 seed = 2
 torch.manual_seed(seed)
 np.random.seed(seed)
@@ -58,7 +58,7 @@ class Transform_indicators(Dataset):
         super(Transform_indicators, self).__init__()
         self.filename = r"E:\西南大学\GAN\SFRA的指标程序\transformer_indicators_norm_data.xlsx"
         # self.filename = r"E:\陈宇文件\GAN\程序\SFRA的指标程序\transformer_indicators_norm_data.xlsx"
-        # 一共有1810个数据
+
         data = np.array(pd.read_excel(self.filename, sheet_name='Sheet1'))
         self.SFRA_indicator = torch.tensor(data[:, 0:30]).float()
         self.SFRA_label = torch.tensor(data[:, 30]).long()
@@ -76,7 +76,6 @@ class Transform_indicators(Dataset):
 
 # hyper parameters
 batch_size = 6
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 2e-4
 SEQ_SIZE = 30
@@ -196,7 +195,7 @@ for epoch in range(NUM_EPOCHS):
 
 
 
-    # 画图
+
     filename = r"E:\西南大学\GAN\SFRA的指标程序\transformer_indicators_norm_data.xlsx"
     # filename = r"E:\陈宇文件\GAN\程序\SFRA的指标程序\transformer_indicators_norm_data.xlsx"
     data = np.array(pd.read_excel(filename, sheet_name='Sheet1'))
@@ -206,7 +205,6 @@ for epoch in range(NUM_EPOCHS):
             plot_fake_1 = gen(fixed_noise, plot_label_1)
             plot_fake_2 = gen(fixed_noise, plot_label_2)
             # plot scatter
-            # 读表和下面单个选择不一样 表是单个[] 下面numpy类型的是2个[][]选择
             SFRA_indicator = real_data[:, 0:30].reshape(-1, 30)
             SFRA_label = real_data[:, 30].reshape(-1)
             # fake = fake.cpu().numpy().reshape(-1, 30)
