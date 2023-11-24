@@ -171,27 +171,27 @@ for epoch in range(NUM_EPOCHS):
             loss_critic.backward(retain_graph=True)
             opt_critic.step()
 
-            # Train Generator: max E[critic(gen_fake)] <-> min -E[critic(gen_fake)]
-            gen_fake = critic(fake, labels).reshape(-1)
-            loss_gen = -torch.mean(gen_fake)
-            gen.zero_grad()
-            loss_gen.backward()
-            opt_gen.step()
+        # Train Generator: max E[critic(gen_fake)] <-> min -E[critic(gen_fake)]
+        gen_fake = critic(fake, labels).reshape(-1)
+        loss_gen = -torch.mean(gen_fake)
+        gen.zero_grad()
+        loss_gen.backward()
+        opt_gen.step()
 
-            # Print losses occasionally and print to tensorboard
-            if batch_idx % 8 == 0 and batch_idx > 0:
-                print(
-                    f"Epoch [{epoch}/{NUM_EPOCHS}] Batch {batch_idx}/{len(SFRA_DataLoader)} \
-                              Loss D: {loss_critic:.4f}, loss G: {loss_gen:.4f}"
-                )
-                # take out (up to) 32 examples
-                writer_curve.add_scalar("loss_gen", loss_gen, global_step=step)
-                if loss_gen < best_gen_loss:
-                    torch.save(gen.state_dict(), rf"E:\陈宇文件\GAN\程序\gen_best\gen{loss_gen}.pt")
-                    best_gen_loss = loss_gen
+        # Print losses occasionally and print to tensorboard
+        if batch_idx % 8 == 0 and batch_idx > 0:
+            print(
+                f"Epoch [{epoch}/{NUM_EPOCHS}] Batch {batch_idx}/{len(SFRA_DataLoader)} \
+                          Loss D: {loss_critic:.4f}, loss G: {loss_gen:.4f}"
+            )
+            # take out (up to) 32 examples
+            writer_curve.add_scalar("loss_gen", loss_gen, global_step=step)
+            if loss_gen < best_gen_loss:
+                torch.save(gen.state_dict(), rf"E:\陈宇文件\GAN\程序\gen_best\gen{loss_gen}.pt")
+                best_gen_loss = loss_gen
 
-                writer_curve.add_scalar("loss_critic", loss_critic, global_step=step)
-                step += 1
+            writer_curve.add_scalar("loss_critic", loss_critic, global_step=step)
+            step += 1
 
 
 
