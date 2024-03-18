@@ -12,4 +12,5 @@ url = {https://www.sciencedirect.com/science/article/pii/S1350630724001614},
 author = {Yu Chen and Zhongyong Zhao and Jiangnan Liu and Shan Tan and Changqing Liu},
 keywords = {Conditional-WGAN-GP, Transformer winding, Frequency response analysis, Fault diagnosis, Data augmentation}
 }
+
 https://www.sciencedirect.com/science/article/pii/S1350630724001614
